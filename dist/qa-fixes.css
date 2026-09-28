@@ -1,0 +1,120 @@
+/* Layout repairs: keep meaningful content in its own space in either direction. */
+.hero-copy .qa-tour-note{position:relative;inset:auto!important;width:min(100%,380px);margin-top:28px;display:flex;gap:7px;padding:14px 16px;min-height:132px;box-sizing:border-box;color:#fff0f2;text-align:start}
+.hero-copy .qa-tour-note::before{display:none}
+.hero-copy .qa-tour-kicker{font-size:12px;white-space:normal}
+.hero-copy .qa-tour-note strong{font-size:16px;white-space:normal;line-height:1.4}
+.hero-copy .qa-tour-detail{font-size:14px;line-height:1.6}
+.hero-copy{padding-bottom:0}
+@media(min-width:1101px){.hero-copy{transform:translateY(-90px)}}
+.qa-tour-dots{gap:2px}
+.qa-tour-dot,.qa-tour-dot.is-active{position:relative;width:24px;height:32px;min-width:24px;min-height:32px;border-radius:8px;background:transparent}
+.qa-tour-dot::after{content:"";position:absolute;top:12px;left:8px;width:8px;height:8px;border-radius:10px;background:#b18491}
+.qa-tour-dot.is-active::after{left:3px;width:18px;background:#f0becb}
+.qa-tour-arrow,.qa-tour-pause{width:40px;height:40px;flex:none}
+.qa-tour-controls{gap:7px}
+html[data-theme=dark] :is(.dark-eyebrow,.scenario-kicker,.section h2 em,.about-section h2 em){color:#e9afc0}
+html[data-theme=dark] .work-tags span{background:#462c3a;color:#f9e5ec;border:1px solid #8b6172}
+.work-tags span{font-size:12px;line-height:1.5}
+html[data-theme=dark] .scenario-controls{background:#23151e;color:#ead5dd;border-top:1px solid #60414e}
+.scenario-step{font-size:14px}
+.compare-panel{min-width:0}
+.compare-panel p{font-size:14px;line-height:1.6}
+.scenario-controls{gap:12px}
+.mobile-menu summary{min-width:40px;min-height:40px}
+@media(max-width:1100px){
+  .hero-layout,.hero-layout.shell{display:flex;flex-direction:column;width:calc(100% - 42px);padding:124px 0 40px;min-height:0;gap:24px}
+  .hero-copy{width:100%;transform:none;padding:0}
+  .hero-copy h1{font-size:clamp(54px,8vw,78px)}
+  .hero-copy .hero-lede{max-width:600px}
+  .hero-copy .qa-tour-note{width:min(100%,540px);min-height:125px}
+  .hero-visual,html[dir=rtl] .hero-visual{width:100%;height:auto;aspect-ratio:1.48;margin:0;overflow:visible;display:block}
+  .qa-laptop-anchor{width:100%;right:0;bottom:14%}
+  .qa-tour-controls{bottom:0}
+  .hero-reference{object-position:center;opacity:.45}
+  .hero::before,html[dir=rtl] .hero::before{background:linear-gradient(#190910 0%,#190910dd 40%,transparent 90%)}
+  html[data-theme=light] .hero::before,html[dir=rtl][data-theme=light] .hero::before{background:linear-gradient(#fbf6f7 0%,#fbf6f7dd 40%,transparent 90%)}
+  .qa-lens{width:76px;height:76px}
+  .qa-lens::after{left:60px;top:63px;width:33px;height:6px}
+  .qa-lens-readout{font-size:14px}
+  .qa-tour.has-finding .qa-lens-readout{font-size:11px}
+}
+@media(max-width:800px),(prefers-reduced-motion:reduce){
+  .story-chapter,html[dir=rtl] .story-chapter{position:relative;inset:auto;width:100%;transform:none;opacity:1;visibility:visible}
+  .story-deck,html[dir=rtl] .story-deck{position:relative;inset:auto;width:100%;height:auto;transform:none;display:grid;gap:20px;margin:20px 0 0}
+  .story-card,html[dir=rtl] .story-card{position:relative;inset:auto;width:100%;height:auto;min-height:260px;transform:none!important;opacity:1;visibility:visible;padding:24px;box-sizing:border-box}
+  .story-card-front{order:0}.story-card-mid{order:1}.story-card-back{order:2}
+  .story-card strong,html[dir=rtl] .story-card strong{font-size:22px;line-height:1.4;letter-spacing:normal}
+  .story-card-number,.story-card-bottom{font-size:12px;line-height:1.5}
+  .story-card-icon{margin:20px auto}
+}
+@media(max-width:600px){
+  .hero-layout,.hero-layout.shell{width:calc(100% - 36px);padding-top:108px}
+  .hero-copy h1{font-size:clamp(46px,12vw,66px);line-height:1.03}
+  html[dir=rtl] .hero-copy h1{font-size:clamp(40px,10.5vw,58px)}
+  .hero-visual,html[dir=rtl] .hero-visual{aspect-ratio:auto;height:calc((100vw - 36px)*.563 + 90px)}
+  .qa-laptop-anchor{bottom:75px}
+  .qa-lens{width:58px;height:58px;border-width:2px}
+  .qa-lens::after{left:45px;top:48px;width:24px;height:5px}
+  .qa-lens-readout{font-size:11px}
+  .qa-tour.has-finding .qa-lens-readout{font-size:9px}
+  .qa-lens-signal{width:20px;height:20px;font-size:12px}
+  .qa-tour-controls{max-width:100%;box-sizing:border-box;gap:4px}
+  .scenario-step{font-size:13px;line-height:1.5;min-height:66px}
+  .compare-grid{grid-template-columns:1fr}
+  .compare-panel strong{font-size:17px}
+  .stage-note,.compare-panel p{font-size:14px}
+  .fact small{font-size:12px}
+  .button-dark{font-size:13px}
+  .story-chapter h2{font-size:clamp(44px,12vw,72px);letter-spacing:-.05em}
+  .contact-email{font-size:clamp(16px,4.8vw,22px);overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-copy{transform:none}
+  .motion-story-stage{min-height:0;height:auto}
+  .story-chapters{position:relative;inset:auto}
+  .story-chapter h2,html[dir=rtl] .story-chapter h2{font-size:clamp(40px,7vw,80px)}
+}
+/* Seat the laptop below the desk horizon, not in front of the wall. */
+@media(min-width:1101px){.qa-laptop-anchor{bottom:5%}}
+.qa-laptop-anchor .qa-scene-fallback{filter:drop-shadow(0 5px 3px rgba(12,2,7,.8))}
+@media(max-width:1100px){
+  .hero-reference{display:block}
+  .hero-visual,html[data-theme=light] .hero-visual{background:transparent;border-radius:0}
+}
+@media(min-width:1101px){.qa-tour-controls{bottom:-4%}}
+@media(max-width:600px){.qa-laptop-anchor{bottom:60px}}
+/* Phase two keeps the connecting evidence foremost, clear of the heading. */
+@media(min-width:801px) and (prefers-reduced-motion:no-preference){
+ .story-deck{transition:left .85s cubic-bezier(.22,1,.36,1)}
+ .motion-story.phase-1 .story-deck{left:72%}
+ .motion-story.phase-1 .story-card-front{transform:translate(-48%,46%) rotate(-12deg) scale(.76);z-index:2}
+ .motion-story.phase-1 .story-card-mid{transform:translate(1%,-8%) rotate(1deg) scale(1.06);z-index:4}
+ .motion-story.phase-1 .story-card-back{transform:translate(58%,16%) rotate(14deg) scale(.78);z-index:1}
+ html[dir=rtl] .motion-story.phase-1 .story-deck{left:28%}
+ html[dir=rtl] .motion-story.phase-1 .story-card-front{transform:translate(48%,46%) rotate(12deg) scale(.76)}
+ html[dir=rtl] .motion-story.phase-1 .story-card-back{transform:translate(-58%,16%) rotate(-14deg) scale(.78)}
+}
+@media(min-width:801px) and (max-width:1100px) and (prefers-reduced-motion:no-preference){
+ .motion-story.phase-1 .story-deck{width:190px;height:285px}
+ .motion-story.phase-1 .story-chapter>p:last-child{max-width:40%}
+ html[dir=rtl] .motion-story.phase-1 .story-chapter>p:last-child{max-width:100%}
+}
+/* Keep the entire approved laptop inside the Arabic desktop column. */
+@media(min-width:1101px){
+ html[dir=rtl] .hero-layout{grid-template-columns:minmax(0, .32fr) minmax(0, .68fr)}
+ html[dir=rtl] .hero-copy{transform:translateY(-45px)}
+ html[dir=rtl] .hero-visual{width:100%;margin:0;height:700px}
+ html[dir=rtl] .hero-reference{transform:translateX(-50%) scaleX(-1)}
+ html[dir=rtl] .qa-laptop-anchor .qa-scene-fallback{transform:scaleX(-1)}
+ html[dir=rtl] .qa-laptop-anchor::before,html[dir=rtl] .qa-laptop-anchor::after{left:auto;right:5%;transform:rotate(-6deg)}
+ html[dir=rtl] .qa-laptop-anchor{width:100%;right:0;bottom:5%}
+ html[dir=rtl] .qa-tour-controls{bottom:-4%}
+}
+.scenario-panel .compare-panel strong{overflow-wrap:anywhere}
+/* Technical evidence stays legible in the dark case-study surface. */
+html[data-theme=dark] .scenario-panel .compare-panel{background:#24151d;border:1px solid #765061;color:#f8e8ee}
+html[data-theme=dark] .scenario-panel .compare-panel strong{color:#f8e8ee}
+html[data-theme=dark] .scenario-panel .compare-panel p{color:#dfc8d2}
+html[data-theme=dark] .scenario-panel .compare-panel small,html[data-theme=dark] .stage-top{color:#e9afc0}
+
+.qa-tour-controls{display:none!important}
