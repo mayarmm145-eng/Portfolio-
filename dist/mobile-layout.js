@@ -25,3 +25,15 @@
     }
   });
 })();
+
+// Dismiss an open compact menu when leaving it or switching to desktop.
+(() => {
+  const menu = document.querySelector('.mobile-menu');
+  if (!menu) return;
+  document.addEventListener('click', event => {
+    if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+  matchMedia('(min-width:1101px)').addEventListener('change', event => {
+    if (event.matches) menu.open = false;
+  });
+})();
