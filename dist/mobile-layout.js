@@ -1,6 +1,6 @@
 (() => {
  const media=matchMedia('(max-width:800px)'),layout=document.querySelector('.hero-layout');
- const reader=document.createElement('section');reader.className='mobile-investigation';reader.setAttribute('aria-labelledby','mobile-investigation-title');layout.append(reader);
+ const reader=document.createElement('section');reader.className='mobile-investigation';reader.setAttribute('aria-labelledby','mobile-investigation-title');layout.closest('.hero').after(reader);
  const deck=document.querySelector('.story-deck'),chapters=[...document.querySelectorAll('.story-chapter')];
  const cards=['front','mid','back'].map(n=>document.querySelector('.story-card-'+n));
  function render(){

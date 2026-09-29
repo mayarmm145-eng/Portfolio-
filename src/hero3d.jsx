@@ -1,153 +1,162 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import gsap from 'gsap';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const visual = document.querySelector('.hero-visual');
-const mount = visual?.querySelector('.qa-scene-canvas');
+// Hinge architecture inspired by Ksenia Kondrashova's MIT laptop example.
+// No controls, webcam, post-processing, or reference/demo screen is loaded.
+const anchor = document.querySelector('.qa-laptop-anchor');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-const ink = '#170b10';
-const rose = '#d99aab';
+const compact = matchMedia('(max-width:768px)');
+const story = window.qaInvestigation;
+let renderer, master, scene, camera, model, lid, display, texture;
+let visible = false, initialized = false, started = false, failed = false;
+let drawPending = 0, environment;
+const host = document.createElement('div');
+host.className = 'macbook-stage'; host.setAttribute('aria-hidden', 'true');
+anchor.append(host);
+anchor.dataset.modelState = 'loading';
 
-function texture(draw, width = 1400, height = 850) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width; canvas.height = height;
-  const c = canvas.getContext('2d');
-  draw(c, width, height);
-  const map = new THREE.CanvasTexture(canvas);
-  map.colorSpace = THREE.SRGBColorSpace;
-  map.anisotropy = 4;
-  return map;
+function fallback() {
+  if (failed) return;
+  failed = true; master?.kill(); cancelAnimationFrame(drawPending);
+  anchor.classList.remove('model-ready'); anchor.dataset.modelState = 'fallback';
+  host.remove(); renderer?.dispose(); texture?.dispose();environment?.dispose();
+  scene?.traverse(object => {object.geometry?.dispose(); if(object.material) for(const m of [object.material].flat()) m.dispose();});
+  story?.release();
 }
-function round(c, x, y, w, h, r, fill, stroke) {
-  c.beginPath(); c.roundRect(x,y,w,h,r);
-  if(fill){c.fillStyle=fill;c.fill();}
-  if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke();}
+function render() {
+  drawPending = 0;
+  if (!initialized || failed || !visible || document.hidden) return;
+  if (display.opacity > 0) texture.needsUpdate = true;
+  renderer.render(scene, camera);
 }
-function label(c,text,x,y,size=18,color='#f4dfe4',weight=500){const arabic=document.documentElement.lang==='ar';c.fillStyle=color;c.font=`${weight} ${size}px ${arabic?'Cairo, Arial':'Arial'}, sans-serif`;c.textAlign='left';c.direction=arabic?'rtl':'ltr';c.fillText(window.siteTranslate?.(text) ?? text,x,y);c.direction='ltr';}
-const wording = (en, ar) => document.documentElement.lang === 'ar' ? ar : en;
-const referenceScreen = new Image();
-function drawDashboard(c,w,h,step=0) {
-  if (document.documentElement.lang !== 'ar' && referenceScreen.complete && referenceScreen.naturalWidth) {
-    c.clearRect(0,0,w,h);
-    c.drawImage(referenceScreen,0,0,w,h);
-    if(step===3){
-      round(c,250,672,710,72,12,'rgba(105,30,49,.86)','#e89aab');
-      label(c,'INV-001   REFUND MISMATCH   ·   5.000 KWD DISCREPANCY',274,720,28,'#fff1f2',700);
+function invalidate() {
+  if (!drawPending && visible && !document.hidden && !failed) drawPending = requestAnimationFrame(render);
+}
+function resize() {
+  if (!renderer || !initialized) return;
+  const width = anchor.clientWidth, height = anchor.clientHeight;
+  if (!width || !height) return;
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, compact.matches ? 1.25 : 1.75));
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
+  // Fit the entire OPEN model, not its animated current bounds. This avoids
+  // a camera jump while opening and guarantees clearance on all four edges.
+  const angle = lid.rotation.x;
+  lid.rotation.x = -.15; model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  const rtl = document.documentElement.dir === 'rtl';
+  const direction = new THREE.Vector3(compact.matches ? 9 : (rtl ? -27 : 27), compact.matches ? 17 : 21, 62).normalize();
+  const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), direction).normalize();
+  const up = new THREE.Vector3().crossVectors(direction,right).normalize();
+  const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  let distance = 0;
+  model.traverse(mesh=>{
+    const positions=mesh.geometry?.attributes.position;
+    if(!positions)return;
+    for(let i=0;i<positions.count;i++){
+      const p=new THREE.Vector3().fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld).sub(center);
+      distance=Math.max(distance,Math.abs(p.dot(right))/(tangent*camera.aspect)+p.dot(direction),Math.abs(p.dot(up))/tangent+p.dot(direction));
     }
-    return;
-  }
-  c.clearRect(0,0,w,h);
-  const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#391521');bg.addColorStop(1,'#170910');c.fillStyle=bg;c.fillRect(0,0,w,h);
-  round(c,25,25,w-50,h-50,24,'#210e17','#69404b');
-  c.fillStyle='#2c111d';c.fillRect(25,25,205,h-50);
-  c.fillStyle='#c89eaa';c.font='700 25px Arial';c.fillText('MM / QA',55,83);
-  const menu=[wording('Overview','نظرة عامة'),wording('Investigations','التحقيقات'),wording('Evidence','الأدلة'),wording('Reports','التقارير')];
-  menu.forEach((item,i)=>{if(i===1)round(c,42,142+i*90,175,66,12,'#683144');label(c,item,56,183+i*90,25,i===1?'#fff1f3':'#c9a7af',i===1?700:500);});
-  label(c,wording('QA / INVESTIGATION','ضمان الجودة / التحقيق'),270,80,28,'#e9b6c1',700);
-  label(c,wording('A refund changed the invoice state','الاسترداد غيّر حالة الفاتورة'),270,139,43,'#fff0f2',700);
-  c.strokeStyle='#71414d';c.lineWidth=2;c.beginPath();c.moveTo(270,164);c.lineTo(w-48,164);c.stroke();
-  const cards=[
-    {x:270,title:wording('PAYMENT','المدفوع'),value:'25.000',foot:wording('KWD · confirmed','د.ك · مؤكد')},
-    {x:645,title:wording('REFUND','المسترد'),value:'5.000',foot:wording('KWD · issued','د.ك · تم الاسترداد')},
-    {x:1020,title:wording('NET RETAINED','الصافي'),value:'20.000',foot:wording('KWD · retained','د.ك · المتبقي')}
-  ];
-  cards.forEach((card,i)=>{
-    const active=step===i;round(c,card.x,190,345,215,16,active?'#5a2638':'#321721',active?'#f4b2c3':'#65404c');
-    label(c,card.title,card.x+24,235,25,'#e9b6c1',700);
-    label(c,card.value,card.x+24,320,63,'#fff3f4',700);
-    label(c,card.foot,card.x+24,371,23,'#d2aeb8');
   });
-  round(c,270,445,1095,167,16,'#301823',step>=2?'#d68599':'#65404c');
-  label(c,wording('INVOICE STATUS AFTER REFUND','حالة الفاتورة بعد الاسترداد'),300,492,27,'#e7b7c2',700);
-  round(c,300,516,285,64,10,step>=2?'#8d304b':'#482938');
-  label(c,step>=2?wording('UNPAID','غير مدفوعة'):wording('PAID','مدفوعة'),321,561,39,'#fff1f2',700);
-  label(c,step>=2?wording('5.000 KWD shown as due','يظهر 5.000 د.ك مستحقًا'):wording('No amount due','لا يوجد مبلغ مستحق'),615,557,32,step>=2?'#ffabb5':'#dfc2c9',600);
-  round(c,270,641,1095,148,16,step===3?'#652638':'#28131d',step===3?'#f4a8b7':'#67404b');
-  label(c,wording('EXPECTED','المتوقع'),300,685,25,'#e8adbc',700);
-  label(c,wording('Paid · partially refunded · 0 due','مدفوعة · مستردة جزئيًا · المستحق صفر'),300,748,38,'#fff0f2',700);
+  camera.position.copy(center).addScaledVector(direction,distance*1.035);
+  camera.lookAt(center); camera.updateProjectionMatrix();
+  lid.rotation.x = angle; model.updateMatrixWorld(true); invalidate();
 }
-const dashboard = texture((c,w,h)=>drawDashboard(c,w,h,0));
-referenceScreen.onload=()=>{
- drawDashboard(dashboard.image.getContext('2d'),1400,850,0);
- dashboard.needsUpdate=true;
- window.dispatchEvent(new Event('qa-screen-ready'));
-};
-referenceScreen.src='assets/qa-dashboard-reference.webp';
-const keyboard = texture((c,w,h)=>{
-  const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#271820');bg.addColorStop(1,'#170f15');c.fillStyle=bg;c.fillRect(0,0,w,h);
-  for(let row=0;row<5;row++)for(let col=0;col<14;col++){
-    const x=24+col*83,y=17+row*78;
-    round(c,x+2,y+5,73,64,7,'#08070a');
-    const key=c.createLinearGradient(x,y,x,y+60);key.addColorStop(0,'#4b303a');key.addColorStop(.3,'#30222a');key.addColorStop(1,'#18141b');
-    round(c,x,y,73,58,7,key,'#76515e');
-    c.fillStyle='#b898a3';c.font='500 13px Arial';c.fillText(row===0?String((col+1)%10):'QWERTYUIOPASDFGHJKLZXCVBNM'[row*5+col]??'·',x+11,y+21);
+function begin() {
+  if (!initialized || started || !visible || document.hidden || failed) return;
+  started = true; story.hold();
+  anchor.classList.add('model-ready');
+  if (reduced.matches) {
+    lid.rotation.x = -.15; display.opacity = 1;
+    anchor.dataset.modelState = 'open'; story.finish(); invalidate(); return;
   }
-},1200,420);
-function Dashboard({still}) {
- const ref=useRef();const map=useMemo(()=>dashboard,[]);const {invalidate}=useThree();
- useEffect(()=>{const update=e=>{drawDashboard(map.image.getContext('2d'),1400,850,e.detail.index);map.needsUpdate=true;invalidate();};window.addEventListener('qa-tour-step',update);window.addEventListener('qa-screen-ready',invalidate);return()=>{window.removeEventListener('qa-tour-step',update);window.removeEventListener('qa-screen-ready',invalidate);};},[map,invalidate]);
- useEffect(()=>{if(!ref.current)return;const o=ref.current;o.position.y=still?.65:.3;o.scale.setScalar(still?1:.92);if(!still){const t=gsap.timeline({delay:2.12,onUpdate:invalidate});t.to(o.position,{y:.65,duration:.73,ease:'power3.out'}).to(o.scale,{x:1,y:1,z:1,duration:.73,ease:'power3.out'},0);return()=>t.kill();}},[still,invalidate]);
- return <group ref={ref} position={[-.35,.36,-1.15]} rotation={[-.025,.11,-.09]}>
-  <group rotation={[-.025,0,0]}>
-   <RoundedBox args={[11.95,7.4,.34]} radius={.26} smoothness={4} castShadow><meshPhysicalMaterial color="#2c111b" metalness={.65} roughness={.29} clearcoat={.65}/></RoundedBox>
-   <mesh position={[0,0,.181]}><planeGeometry args={[11.65,7.05]}/><meshBasicMaterial map={map} toneMapped={false}/></mesh>
-   <mesh position={[0,0,.191]}><planeGeometry args={[11.75,7.15]}/><meshPhysicalMaterial color="#edb5be" transparent opacity={.035} metalness={.3} roughness={.2} depthWrite={false}/></mesh>
-  </group>
-  <mesh position={[0,-3.76,-.02]} rotation={[0,0,Math.PI/2]} castShadow><cylinderGeometry args={[.14,.14,11.5,20]}/><meshStandardMaterial color="#bc8491" metalness={.8} roughness={.25}/></mesh>
-  <RoundedBox args={[11.9,.32,5.55]} radius={.16} smoothness={4} position={[0,-4.12,2.45]} castShadow receiveShadow><meshPhysicalMaterial color="#57313b" metalness={.68} roughness={.27} clearcoat={.72}/></RoundedBox>
-  <RoundedBox args={[10.8,.055,3.3]} radius={.08} smoothness={3} position={[0,-3.82,1.83]}><meshStandardMaterial color="#21151c" metalness={.3} roughness={.42}/></RoundedBox>
-  <mesh position={[0,-3.765,1.83]} rotation={[-Math.PI/2,0,0]} renderOrder={20}><planeGeometry args={[10.75,3.25]}/><meshBasicMaterial map={keyboard} side={THREE.DoubleSide} toneMapped={false} depthTest={false} depthWrite={false}/></mesh>
-  <RoundedBox args={[3.65,.014,1.12]} radius={.04} smoothness={2} position={[0,-3.84,4.2]}><meshStandardMaterial color="#4d2b35" metalness={.52} roughness={.38}/></RoundedBox>
-  <mesh position={[0,-4.30,5.20]}><boxGeometry args={[11.45,.045,.1]}/><meshStandardMaterial color="#c28b96" metalness={.8} roughness={.25}/></mesh>
-  {[2.95,3.55,4.15].map((z,i)=><mesh key={z} position={[5.971,-4.115,z]}><boxGeometry args={[.008,.043,i===0?.31:.2]}/><meshBasicMaterial color="#100a10"/></mesh>)}
- </group>;
+  anchor.dataset.modelState = 'closed';
+  const entrance = gsap.timeline({paused:true}).fromTo(model.position,{y:compact.matches?0:.2},{y:0,duration:.5,ease:'power2.out'});
+  const opening = gsap.timeline({paused:true}).to(lid.rotation,{x:-.15,duration:1,ease:'power3.inOut'});
+  const power = gsap.timeline({paused:true}).to(display,{opacity:1,duration:.65,ease:'sine.inOut'});
+  const investigation = gsap.timeline({paused:true}).call(()=>{anchor.dataset.modelState='open';story.start();}).to({},{duration:.01});
+  master = gsap.timeline({paused:true,onUpdate:invalidate});
+  master.to(entrance,{progress:1,duration:.5,ease:'none'},.2).call(()=>{anchor.dataset.modelState='opening'},[],.65)
+    .to(opening,{progress:1,duration:1,ease:'none'},.65)
+    .to(power,{progress:1,duration:.65,ease:'none'},1.35)
+    .call(()=>investigation.play(0),[],2.1);
+  render();
+  requestAnimationFrame(()=>{if(visible&&!document.hidden)master.play(0)});
+  invalidate();
 }
-const contact = texture((c,w,h)=>{c.clearRect(0,0,w,h);c.save();c.translate(w/2,h/2);c.scale(1,.42);const g=c.createRadialGradient(0,0,8,0,0,w*.45);g.addColorStop(0,'rgba(4,1,3,.72)');g.addColorStop(.55,'rgba(9,2,5,.43)');g.addColorStop(1,'rgba(9,2,5,0)');c.fillStyle=g;c.fillRect(-w/2,-h,w,h*2);c.restore();},512,256);
-function Desk({compact}){
- return <group>
-  <mesh position={[0,-3.645,2.1]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[15,8]}/><meshBasicMaterial map={contact} transparent depthWrite={false} opacity={.9}/></mesh>
-  <mesh position={[0,-3.66,1.5]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[compact?20:24,11]}/><shadowMaterial transparent opacity={.38}/></mesh>
- </group>;
+function visibility() {
+  if (failed) return;
+  if (visible && !document.hidden) {begin();master?.resume();story?.suspend(false);invalidate();}
+  else {master?.pause();story?.suspend(true);cancelAnimationFrame(drawPending);drawPending=0;}
 }
-function Scene({compact,still}){
- return <>
-  <ambientLight intensity={.58} color="#e5aab6"/><directionalLight position={[-3,6,6]} intensity={2.3} color="#f8ded4" castShadow shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={10} shadow-camera-bottom={-10} shadow-normalBias={.035} shadow-radius={3}/><directionalLight position={[4,1,3]} intensity={.85} color="#da9ca8"/><directionalLight position={[2,3,-3]} intensity={1.2} color="#d8a1ad"/>
-  <group scale={compact?.74:1} position={compact?[.04,-.3,0]:[0,0,0]}>
-   <Desk compact={compact}/><Dashboard still={still}/>
-  </group>
- </>;
+function keyboardTexture() {
+  const canvas = document.createElement('canvas'); canvas.width=1024; canvas.height=430;
+  const c=canvas.getContext('2d');c.fillStyle='#1b1319';c.fillRect(0,0,1024,430);
+  const rows=['1234567890−=⌫','QWERTYUIOP[]','ASDFGHJKL;↵','ZXCVBNM,./↑'];
+  rows.forEach((letters,r)=>[...letters].forEach((char,k)=>{
+    const x=12+k*76,y=12+r*79;c.fillStyle='#392b32';c.beginPath();c.roundRect(x,y,67,66,6);c.fill();c.strokeStyle='#74515d';c.lineWidth=1;c.stroke();c.fillStyle='#e4b9c8';c.font='15px Arial';c.fillText(char,x+11,y+22);
+  }));
+  c.fillStyle='#392b32';c.beginPath();c.roundRect(258,334,502,66,6);c.fill();c.stroke();
+  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
 }
-function CameraRig({compact}){
- const {camera,invalidate}=useThree();
- useEffect(()=>{camera.position.set(0,compact?3.5:4.2,compact?19:20.5);camera.fov=compact?34:39;camera.lookAt(compact?0:-1.3,compact?-1.4:-1.45,0);camera.updateProjectionMatrix();invalidate();},[compact,camera,invalidate]);
- return null;
-}
-function MarkFirstFrame(){
- const marked=useRef(false);
- useFrame(()=>{if(!marked.current){marked.current=true;visual.classList.add('scene-ready');}});
- return null;
-}
-function App(){
- const [compact,setCompact]=useState(innerWidth<800);
- useEffect(()=>{const update=()=>setCompact(innerWidth<800);addEventListener('resize',update);return()=>removeEventListener('resize',update);},[]);
- const still=reduced.matches;
- return <Canvas shadows frameloop="demand" camera={{position:[0,compact?3.5:4.2,compact?19:20.5],fov:compact?34:39,near:.1,far:70}} gl={{alpha:true,antialias:true,powerPreference:'low-power'}} dpr={[1,compact?1.25:1.5]} onCreated={({gl,camera})=>{camera.lookAt(compact?0:-1.3,compact?-1.4:-1.45,0);gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.4;gl.domElement.addEventListener('webglcontextlost',()=>{visual.classList.remove('scene-ready');visual.classList.add('scene-failed');},{once:true});}}><MarkFirstFrame/><CameraRig compact={compact}/><Scene compact={compact} still={still}/></Canvas>;
-}
-class SceneErrorBoundary extends React.Component {
-  constructor(props){super(props);this.state={failed:false};}
-  static getDerivedStateFromError(){return {failed:true};}
-  componentDidCatch(error){visual.classList.remove('scene-ready');visual.classList.add('scene-failed');console.warn('Using the static scene because WebGL is unavailable.',error);}
-  render(){return this.state.failed?null:this.props.children;}
-}
-if(visual&&mount&&!reduced.matches){
-  let supported=false;
+async function init() {
   try {
-    const probe=document.createElement('canvas');
-    supported=Boolean(probe.getContext('webgl2',{powerPreference:'low-power'}));
-  } catch (_) { supported=false; }
-  if(supported) createRoot(mount).render(<SceneErrorBoundary><App/></SceneErrorBoundary>);
-  else visual.classList.add('scene-failed');
+    if (!story) throw new Error('Screen unavailable');
+    const canvas=document.createElement('canvas');
+    const settings={alpha:true,antialias:!compact.matches,powerPreference:'low-power'};
+    const context=canvas.getContext('webgl2',settings);
+    if(!context)throw new Error('WebGL unavailable');
+    renderer = new THREE.WebGLRenderer({canvas,context,...settings});
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
+    renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();fallback()},{once:true});
+    host.append(renderer.domElement);
+    scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,1,.1,500);
+    const gltf=await new GLTFLoader().loadAsync('assets/models/macbook.glb');
+    if(failed)return;
+    model=new THREE.Group();lid=new THREE.Group();const base=new THREE.Group();
+    scene.add(model);model.add(lid,base);
+    for(const child of [...gltf.scene.children]) {
+      if(child.name==='_top')lid.add(child);
+      else if(child.name==='_bottom')base.add(child);
+    }
+    if(!lid.children.length||!base.children.length)throw new Error('Incomplete laptop');
+    const metal=new THREE.MeshStandardMaterial({color:'#b2a0a2',metalness:.82,roughness:.27});
+    const plastic=new THREE.MeshStandardMaterial({color:'#100c11',metalness:.12,roughness:.6});
+    model.traverse(mesh=>{if(!mesh.isMesh)return;mesh.material.dispose();mesh.material=['base','lid'].includes(mesh.name)?metal:plastic;});
+    // The current live canvas is the sole source of dashboard/lens pixels.
+    texture=new THREE.CanvasTexture(story.canvas);texture.colorSpace=THREE.SRGBColorSpace;
+    texture.minFilter=THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
+    display=new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:0,toneMapped:false});
+    const screen=new THREE.Mesh(new THREE.PlaneGeometry(29.4,20),display);screen.position.set(0,10.5,.01);lid.add(screen);
+    const black=new THREE.Mesh(new THREE.PlaneGeometry(29.4,20),new THREE.MeshBasicMaterial({color:'#080509'}));black.position.set(0,10.5,0);lid.add(black);
+    const keys=new THREE.Mesh(new THREE.PlaneGeometry(27.7,11.6),new THREE.MeshBasicMaterial({map:keyboardTexture(),toneMapped:false}));keys.rotation.x=-Math.PI/2;keys.position.set(0,.047,7.21);base.add(keys);
+    const room=new RoomEnvironment();const pmrem=new THREE.PMREMGenerator(renderer);
+    environment=pmrem.fromScene(room,.04,.1,100,{size:compact.matches?64:128});scene.environment=environment.texture;scene.environmentIntensity=.75;room.dispose();pmrem.dispose();
+    const shadowCanvas=document.createElement('canvas');shadowCanvas.width=256;shadowCanvas.height=256;
+    const sc=shadowCanvas.getContext('2d'),gradient=sc.createRadialGradient(128,128,24,128,128,128);
+    gradient.addColorStop(0,'rgba(9,2,6,.65)');gradient.addColorStop(.6,'rgba(9,2,6,.35)');gradient.addColorStop(1,'rgba(9,2,6,0)');sc.fillStyle=gradient;sc.fillRect(0,0,256,256);
+    const shadow=new THREE.Mesh(new THREE.PlaneGeometry(39,31),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(0,-1.05,10);scene.add(shadow);
+    scene.add(new THREE.HemisphereLight('#f8e7ea','#321522',1.3));
+    const key=new THREE.DirectionalLight('#ffe6db',3.2);key.position.set(-18,35,32);scene.add(key);
+    const rim=new THREE.DirectionalLight('#d58da4',2);rim.position.set(25,20,-15);scene.add(rim);
+    // Contact shading is a static CSS radial shadow below the model, not
+    // a per-frame shadow map. Phones have only these three inexpensive lights.
+    lid.rotation.x=Math.PI/2;
+    initialized=true;resize();begin();
+    new ResizeObserver(resize).observe(anchor);
+    compact.addEventListener('change',resize);
+    document.addEventListener('site-language-change',resize);
+    document.addEventListener('qa-investigation-frame',invalidate);
+    reduced.addEventListener('change',()=>{
+      if(reduced.matches){master?.kill();lid.rotation.x=-.15;display.opacity=1;anchor.dataset.modelState='open';story.finish();invalidate();}
+      else if(started)story.start();
+    });
+  } catch (error) { anchor.dataset.modelFailure=error.message; fallback(); }
 }
+new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;visibility()},{threshold:.01}).observe(anchor);
+document.addEventListener('visibilitychange',visibility);
+init();

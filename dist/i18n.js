@@ -1,6 +1,41 @@
 // Content stays in the HTML for no-script visitors. This map switches every visible
 // label and accessible name without rebuilding the page or disturbing its markup.
 const ar = {
+"Where engineering, quality,":"حيث تلتقي الهندسة والجودة،",
+"and product thinking meet.":"والتفكير في المنتج.",
+"I build and test products that are reliable, user-centered, and ready for real-world scale.":"أبني وأختبر منتجات موثوقة تتمحور حول المستخدم وجاهزة للتوسع في العالم الحقيقي.",
+"Orders, payments, discounts, refunds, inventory, and checkout flows.":"الطلبات والمدفوعات والخصومات والاستردادات والمخزون ومسارات إتمام الشراء.",
+"Healthcare Workflows":"مسارات الرعاية الصحية",
+"Appointments, invoices, refunds, room revenue, and role-based clinic operations.":"المواعيد والفواتير والاستردادات وإيرادات الغرف وعمليات العيادة حسب الأدوار.",
+"Plans, trials, payments, feature gating, limits, and subscription states.":"الخطط والفترات التجريبية والمدفوعات وإتاحة الميزات والحدود وحالات الاشتراك.",
+"Multilingual Experiences":"تجارب متعددة اللغات",
+"Arabic/English UX, RTL/LTR behavior, responsive layouts, and localization consistency.":"تجربة المستخدم بالعربية والإنجليزية واتجاهات العرض والتخطيطات المتجاوبة واتساق التوطين.",
+"Feature Gating":"إتاحة الميزات",
+"Plans":"الخطط",
+"Trials":"الفترات التجريبية",
+"Invoices":"الفواتير",
+"Arabic/English":"العربية/الإنجليزية",
+"Responsive":"تجاوب",
+"REAL TRANSACTIONS. REAL SCENARIOS.":"معاملات حقيقية. سيناريوهات واقعية.",
+"SMOOTHER OPERATIONS. BETTER CARE.":"عمليات أسلس. رعاية أفضل.",
+"FLEXIBLE MODELS. RELIABLE BILLING.":"نماذج مرنة. فوترة موثوقة.",
+"ONE PRODUCT. A GLOBAL AUDIENCE.":"منتج واحد. جمهور عالمي.",
+"Cart":"السلة",
+"Payment":"الدفع",
+"Complete":"مكتمل",
+"Appointments":"المواعيد",
+"Today⌄":"اليوم⌄",
+"Monthly":"شهري",
+"Yearly":"سنوي",
+"Starter":"أساسي",
+"Pro":"احترافي",
+"Most Popular":"الأكثر شيوعًا",
+"Business":"أعمال",
+
+"Mayar | Software Engineer":"ميار | مهندسة كمبيوتر",
+"Software Engineer focused on Quality & Product Thinking":"مهندسة برمجيات أركز على الجودة والتفكير في المنتج",
+"I test beyond functionality—connecting defects to product impact, user experience, and business context.":"أختبر ما وراء الوظائف، وأربط العيوب بأثرها على المنتج وتجربة المستخدم وسياق الأعمال.",
+
   'Step':'الخطوة',
   'Trace the invoice state after a 5.000 KWD partial refund.':'تتبّع حالة الفاتورة بعد استرداد جزئي بقيمة 5.000 د.ك.',
   'A 5.000 KWD refund incorrectly appears as an amount due. Open the case study.':'ظهر استرداد 5.000 د.ك كمبلغ مستحق بالخطأ. اطّلع على دراسة الحالة.',
@@ -10,7 +45,7 @@ const ar = {
   'QUALITY TURNS COMPLEXITY':'الجودة تحوّل التعقيد','INTO CLARITY':'إلى وضوح',
   'Evidence':'الدليل','in context.':'في سياقه.',
   'I investigate, validate, and turn complex systems into clear, reliable experiences.':'أبحث وأتحقق وأحوّل الأنظمة المعقدة إلى تجارب واضحة وموثوقة.',
-  'View case study':'اطّلع على دراسة الحالة','See more':'اكتشف المزيد',
+  'View case study':'اطّلع على دراسة الحالة','View my CV':'عرض سيرتي الذاتية',
   'QA / WORKSPACE':'مساحة عمل الجودة','ACTIVE INVESTIGATION':'تحقيق جارٍ',
   'Follow the evidence':'اتبع الدليل','In review':'قيد المراجعة',
   'PAYMENT & REFUND FLOW':'رحلة الدفع والاسترداد','Invoice':'الفاتورة','Payment':'الدفع','Refund':'الاسترداد','Reports':'التقارير',
@@ -194,7 +229,7 @@ function applyLanguage(language) {
     node.textContent = arabic && ar[clean] ? original.replace(clean, ar[clean]) : original;
   });
   attrs.forEach(([el,name,original]) => el.setAttribute(name, arabic ? (ar[original] ?? original) : original));
-  document.title = arabic ? ar[englishTitle] : englishTitle;
+  document.title = arabic ? 'ميار | مهندسة كمبيوتر' : 'Mayar | Software Engineer';
   if (metaDescription) metaDescription.content = arabic ? 'ملف أعمال ميار محمد في ضمان جودة البرمجيات، وتجاربها في المنتجات الرقمية والتجارة والرعاية الصحية.' : englishDescription;
   languageButton.textContent = arabic ? 'EN' : 'عربي';
   languageButton.setAttribute('aria-label',arabic ? 'Switch to English' : 'Switch to Arabic');

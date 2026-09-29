@@ -9,10 +9,11 @@
  const arLabels=['قارن الدفعة','قارن الاسترداد','تتبّع الدليل التقني','وضّح الأثر'];
  const details=['Both states record the same 75.000 KWD payment.','Expected refund: 65.000 KWD. Recorded: 55.000 KWD. The remaining 10.000 KWD attempt failed.','Illustrative API evidence; stale booking state is a root-cause hypothesis, not a confirmed conclusion.','The customer is still owed 10.000 KWD. This reconstructed example contains no client data.'];
  const arDetails=['الحالتان تسجّلان الدفعة نفسها: 75.000 د.ك.','الاسترداد المتوقع: 65.000 د.ك. المسجّل: 55.000 د.ك. فشلت محاولة استرداد الـ10.000 د.ك المتبقية.','دليل API توضيحي؛ حالة الحجز القديمة فرضية للسبب الجذري وليست نتيجة مؤكدة.','لا يزال للعميل 10.000 د.ك. هذا مثال توضيحي لا يحتوي بيانات عملاء.'];
- let t=reduce.matches?8.8:0,last=0,paused=reduce.matches,visible=true,phase=-1,raf;
+ let t=reduce.matches?8.8:0,last=0,paused=reduce.matches,visible=true,phase=-1,raf=0,held=false,suspended=false;
  // Solve the projective map from the UI rectangle to the photograph's inner display.
  function fit(){
   const k=anchor.clientWidth/1671;
+  screen.style.top=Math.max(0,anchor.clientHeight-anchor.clientWidth*941/1671)+'px';
   const reflected=document.documentElement.dir==='rtl'&&matchMedia('(min-width:1101px)').matches;
   const corners=reflected?[[74,124],[1132,98],[1213,660],[155,783]]:[[539,98],[1597,124],[1516,783],[458,660]];
   const src=[[0,0],[W,0],[W,H],[0,H]],dst=corners.map(p=>p.map(n=>n*k));
@@ -22,7 +23,24 @@
  }
  function box(c,x,y,w,h,fill,stroke,r=14){c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke()}}
  function text(c,s,x,y,size=20,color='#eddee5',weight=400){c.font=`${weight} ${size}px Arial, sans-serif`;c.fillStyle=color;c.fillText(s,x,y)}
+ function mobileUI(time){
+  g.clearRect(0,0,W,H);g.fillStyle='#180e16';g.fillRect(0,0,W,H);
+  text(g,'Refund investigation',32,47,36,'#fff0f4',700);
+  const targets=[];
+  [false,true].forEach((bad,i)=>{
+   const y=72+i*214;box(g,24,y,1152,197,bad?'#2d1723':'#17241f',bad?'#96576e':'#587060');
+   text(g,bad?'Broken State · FAIL':'Healthy State · PASS',46,y+39,44,bad?'#f1b3c9':'#c4d9ce',700);
+   const rows=bad?[['Payment charged','75.000 KWD'],['Refund recorded','55.000 KWD'],['Refund failed','10.000 KWD remaining']]:[['Payment charged','75.000 KWD'],['Refund processed','65.000 KWD'],['Reconciliation','Correct']];
+   rows.forEach(([label,value],j)=>{const ry=y+83+j*43;text(g,label,46,ry,48,'#ead7e0',500);g.textAlign='right';text(g,value,1152,ry,50,bad&&j===2?'#ffb2cb':'#fff0f4',700);g.textAlign='left';if(j<2)targets.push({x:940,y:ry-10});});
+  });
+  const trace=time<6?'Expected 65.000 · Recorded 55.000':time<8?'POST /api/refunds → 403':'P1 Financial · 10.000 KWD still owed';
+  text(g,trace,32,548,31,'#f1c5d4',700);
+  text(g,time<6?'Same payment. Different refund outcome.':time<8?'INVALID_REFUND_AMOUNT':'Hypothesis: stale booking state — verify ordering.',32,593,28,'#d2b8c4');
+  text(g,'Reconstructed example · No client data',32,635,23,'#bfa5b0');
+  return [targets[0],targets[2],targets[1],{x:960,y:455}];
+ }
  function ui(time){
+  if(mobile.matches)return mobileUI(time);
   g.clearRect(0,0,W,H);g.fillStyle='#180e16';g.fillRect(0,0,W,H);
   text(g,'Refund State Investigation',32,46,31,'#fff0f4',700);
   text(g,'Same flow. Different outcome.',32,76,18,'#bfa5b0');text(g,'ILLUSTRATIVE / INV-002',946,42,15,'#bda0ab',600);
@@ -63,14 +81,35 @@
    ctx.strokeStyle='#cfa8b7';ctx.lineWidth=2;ctx.shadowColor='#0008';ctx.shadowBlur=7;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#8f6e7e';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x+r*.73,p.y+r*.73);ctx.lineTo(p.x+r*1.25,p.y+r*1.25);ctx.stroke();ctx.strokeStyle='#fff3';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r-7,3.8,5.1);ctx.stroke();
    if(t>=5){box(ctx,p.x-48,p.y+20,96,28,'#311222ee','#ad6881',5);text(ctx,'⚠ Mismatch detected',p.x-42,p.y+31,8,'#ffd0df',600);text(ctx,'+10.000 KWD',p.x-32,p.y+42,9,'#ffd0df',700)}ctx.restore();
   }
+  document.dispatchEvent(new Event('qa-investigation-frame'));
   const nextPhase=t<3?0:t<6?1:t<8?2:3;if(nextPhase!==phase){phase=nextPhase;sync()}
  }
  function sync(){const ar=document.documentElement.lang==='ar';document.getElementById('screen-description').lang='en';note.querySelector('.qa-tour-kicker').textContent=ar?'تحقيق استرداد / مثال توضيحي':'REFUND INVESTIGATION / ILLUSTRATIVE';note.querySelector('strong').textContent=(ar?arLabels:labels)[phase<0?0:phase];note.querySelector('.qa-tour-detail').textContent=(ar?arDetails:details)[phase<0?0:phase];note.setAttribute('aria-live',paused?'polite':'off');dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===phase);dot.setAttribute('aria-label',(ar?arLabels:labels)[i]);if(i===phase)dot.setAttribute('aria-current','step');else dot.removeAttribute('aria-current')});pause.textContent=paused?'▶':'Ⅱ';pause.setAttribute('aria-pressed',String(paused));pause.setAttribute('aria-label',ar?(paused?'استئناف التحقيق':'إيقاف التحقيق'):(paused?'Resume investigation':'Pause investigation'))}
  function seek(i){t=[1.3,3.3,6.5,8.8][(i+4)%4];paused=true;phase=-1;draw();sync()}
- dots.forEach((dot,i)=>dot.addEventListener('click',()=>seek(i)));tour.querySelector('.qa-tour-prev').addEventListener('click',()=>seek(phase-1));tour.querySelector('.qa-tour-next').addEventListener('click',()=>seek(phase+1));pause.addEventListener('click',()=>{paused=!paused;sync()});
- function tick(now){if(last&&!paused&&visible&&!document.hidden)t=(t+Math.min(.05,(now-last)/1000))%9.5;last=now;if(visible)draw();raf=requestAnimationFrame(tick)}
- new ResizeObserver(fit).observe(anchor);new IntersectionObserver(e=>{visible=e[0].isIntersecting;last=0},{threshold:.05}).observe(anchor);
- reduce.addEventListener('change',()=>{paused=reduce.matches;if(paused)t=8.8;draw();sync()});document.addEventListener('site-language-change',()=>{fit();sync()});
+ dots.forEach((dot,i)=>dot.addEventListener('click',()=>seek(i)));tour.querySelector('.qa-tour-prev').addEventListener('click',()=>seek(phase-1));tour.querySelector('.qa-tour-next').addEventListener('click',()=>seek(phase+1));pause.addEventListener('click',()=>{paused=!paused;sync();wake()});
+ function schedule(){
+  if(!raf&&!held&&!paused&&!suspended&&visible&&!document.hidden) raf=requestAnimationFrame(tick);
+ }
+ function tick(now){
+  raf=0;
+  if(held||paused||suspended||!visible||document.hidden){last=0;return;}
+  const interval=mobile.matches?1000/30:1000/60;
+  if(!last||now-last>=interval-1){if(last)t=(t+Math.min(.1,(now-last)/1000))%9.5;last=now;draw();}
+  schedule();
+ }
+ function wake(){cancelAnimationFrame(raf);raf=0;last=0;schedule();}
+ function resolution(){const ratio=mobile.matches?.75:1;canvas.width=W*ratio;canvas.height=H*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);draw();}
+ window.qaInvestigation={canvas,
+  hold(){held=true;t=0;phase=-1;wake();draw()},
+  start(){held=false;paused=reduce.matches;t=reduce.matches?8.8:0;phase=-1;draw();sync();wake()},
+  finish(){held=false;paused=true;t=8.8;phase=-1;draw();sync();wake()},
+  release(){held=false;paused=reduce.matches;draw();wake()},
+  suspend(value){suspended=value;wake()}
+ };
+ document.addEventListener('visibilitychange',wake);
+ mobile.addEventListener('change',resolution);
+ new ResizeObserver(fit).observe(anchor);new IntersectionObserver(e=>{visible=e[0].isIntersecting;wake()},{threshold:.05}).observe(anchor);
+ reduce.addEventListener('change',()=>{paused=reduce.matches;if(paused)t=8.8;draw();sync();wake()});document.addEventListener('site-language-change',()=>{fit();sync()});
  matchMedia('(min-width:1101px)').addEventListener('change',fit);
- fit();draw();requestAnimationFrame(tick);
+ fit();resolution();draw();schedule();
 })();
