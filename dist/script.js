@@ -126,12 +126,12 @@ if (tour && !document.querySelector(".locked-screen")) {
 const story = document.getElementById('story');
 const chapters = [...story.querySelectorAll('.story-chapter')];
 const storyCounter = story.querySelector('.story-counter-current');
-const desktopStory = window.matchMedia('(min-width: 801px)');
+const animatedStory = window.matchMedia('(prefers-reduced-motion: no-preference)');
 let storyFrame = 0;
 function updateStory() {
   storyFrame = 0;
   story.querySelector('.story-counter-total').textContent = formatStep(3);
-  if (!desktopStory.matches || reducedMotion) {
+  if (!animatedStory.matches || reducedMotion) {
     story.classList.remove('phase-1', 'phase-2');
     story.classList.add('phase-0');
     chapters.forEach(chapter => chapter.removeAttribute('aria-hidden'));
@@ -152,7 +152,7 @@ function scheduleStory() {
 }
 window.addEventListener('scroll', scheduleStory, { passive: true });
 window.addEventListener('resize', scheduleStory);
-desktopStory.addEventListener?.('change', scheduleStory);
+animatedStory.addEventListener?.('change', scheduleStory);
 updateStory();
 document.addEventListener("site-language-change", updateStory);
 
