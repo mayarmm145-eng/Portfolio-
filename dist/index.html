@@ -123,6 +123,65 @@
             <div class="story-chapter story-chapter-1"><p class="eyebrow">TRACE / THE IMPACT</p><h2>Follow the<br><em>impact.</em></h2><p>Check the connected transactions, statuses, and reports.</p></div>
             <div class="story-chapter story-chapter-2"><p class="eyebrow">EXPLAIN / THE FINDING</p><h2>Make it<br><em>clear.</em></h2><p>Turn the evidence into a finding the team can act on.</p></div>
           </div>
+
+          <div class="story-mobile-timeline" aria-label="From signal to finding">
+            <header class="story-mobile-header reveal">
+              <p class="eyebrow">03 / HOW I THINK</p>
+              <h2><span>From signal</span><span>to <em>finding.</em></span></h2>
+            </header>
+
+            <div class="story-mobile-rail" aria-hidden="true"></div>
+
+            <article class="story-mobile-step story-mobile-step-signal reveal">
+              <span class="story-mobile-node" aria-hidden="true">01</span>
+              <p class="story-mobile-kicker"><b>01</b><span>NOTICE / THE SIGNAL</span></p>
+              <h3>Spot the <em>signal.</em></h3>
+              <p class="story-mobile-copy">A small inconsistency can point to a larger workflow problem.</p>
+              <div class="story-evidence-card story-evidence-signal" aria-label="QA check showing expected and actual values">
+                <div class="story-evidence-top"><span class="story-evidence-icon" aria-hidden="true">⌕</span><strong>QA CHECK</strong><span aria-hidden="true">•••</span></div>
+                <div class="story-metric-row"><span>Expected</span><strong>65.000</strong></div>
+                <div class="story-metric-row is-alert"><span>Actual</span><strong>55.000</strong><i aria-hidden="true">!</i></div>
+                <div class="story-evidence-alert"><span aria-hidden="true">!</span><strong>Expected ≠ Actual</strong></div>
+              </div>
+            </article>
+
+            <article class="story-mobile-step story-mobile-step-impact reveal">
+              <span class="story-mobile-node" aria-hidden="true">02</span>
+              <p class="story-mobile-kicker"><b>02</b><span>TRACE / THE IMPACT</span></p>
+              <h3>Follow the <em>impact.</em></h3>
+              <p class="story-mobile-copy">Check the connected transactions, statuses, and reports.</p>
+              <div class="story-evidence-card story-flow-card" aria-label="Connected payment, refund, invoice, and report flow">
+                <div class="story-flow-row is-done"><span class="story-flow-icon" aria-hidden="true">▣</span><strong>Payment</strong><i aria-hidden="true">✓</i></div>
+                <span class="story-flow-arrow" aria-hidden="true">↓</span>
+                <div class="story-flow-row is-issue"><span class="story-flow-icon" aria-hidden="true">↶</span><strong>Refund</strong><i aria-hidden="true">!</i></div>
+                <span class="story-flow-arrow" aria-hidden="true">↓</span>
+                <div class="story-flow-row"><span class="story-flow-icon" aria-hidden="true">▤</span><strong>Invoice</strong><i aria-hidden="true">?</i></div>
+                <span class="story-flow-arrow" aria-hidden="true">↓</span>
+                <div class="story-flow-row"><span class="story-flow-icon" aria-hidden="true">▥</span><strong>Report</strong></div>
+              </div>
+            </article>
+
+            <article class="story-mobile-step story-mobile-step-finding reveal">
+              <span class="story-mobile-node" aria-hidden="true">03</span>
+              <p class="story-mobile-kicker"><b>03</b><span>EXPLAIN / THE FINDING</span></p>
+              <h3>Make it <em>clear.</em></h3>
+              <p class="story-mobile-copy">Turn the evidence into a finding the team can act on.</p>
+              <div class="story-evidence-card story-finding-card" aria-label="Documented P1 financial finding">
+                <div class="story-finding-head"><span class="story-evidence-icon" aria-hidden="true">▤</span><div><strong>P1 · FINANCIAL</strong><span>Finding documented</span></div><span aria-hidden="true">•••</span></div>
+                <div class="story-finding-table">
+                  <div><span>Expected</span><strong>65.000 KWD</strong></div>
+                  <div><span>Actual</span><strong>55.000 KWD</strong></div>
+                  <div class="is-difference"><span>Difference</span><strong>10.000 KWD</strong></div>
+                </div>
+                <div class="story-finding-actions">
+                  <span><i aria-hidden="true">✓</i> Reproducible</span>
+                  <span><i aria-hidden="true">✓</i> Evidence attached</span>
+                  <span><i aria-hidden="true">→</i> Actionable for the team</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
           <div class="story-deck" aria-hidden="true">
             <div class="story-card story-card-back"><span class="story-card-number">03 / REPORT</span><div class="story-card-icon">≡</div><strong>What should happen?</strong><span class="story-card-bottom">Impact · Expected · Actual</span></div>
             <div class="story-card story-card-mid"><span class="story-card-number">02 / CONNECT</span><div class="story-card-icon">⌁</div><strong>Refund → Invoice → Report</strong><span class="story-card-bottom">Follow the full journey</span></div>
